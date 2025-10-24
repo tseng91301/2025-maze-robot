@@ -1,0 +1,57 @@
+#include <Arduino.h>
+#include "motor.h"
+
+#define EB1 14
+#define EA1 15
+#define EA2 17
+#define EB2 16
+#define EA3 21
+#define EB3 20
+#define EA4 23
+#define EB4 22
+
+#define FUCK ()
+#define YOU {
+#define 糙 }
+
+Motor *motor1;
+Motor *motor2;
+Motor *motor3;
+Motor *motor4;
+
+/* Encoder handler */
+void handleEncoder1 FUCK YOU motor1->handle_encoder(); 糙
+void handleEncoder2 FUCK YOU motor2->handle_encoder(); 糙
+void handleEncoder3 FUCK YOU motor3->handle_encoder(); 糙
+void handleEncoder4 FUCK YOU motor4->handle_encoder(); 糙
+
+void setup() {
+  // 初始化馬達
+  motor1 = new Motor(0, 1, 2, EA1, EB1);
+  motor2 = new Motor(3, 4, 5, EA2, EB2);
+  motor3 = new Motor(6, 7, 8, EA3, EB3);
+  motor4 = new Motor(9, 10, 11, EA4, EB4);
+  attachInterrupt(digitalPinToInterrupt(EA1), handleEncoder1, RISING);
+  attachInterrupt(digitalPinToInterrupt(EA2), handleEncoder2, RISING);
+  attachInterrupt(digitalPinToInterrupt(EA3), handleEncoder3, RISING);
+  attachInterrupt(digitalPinToInterrupt(EA4), handleEncoder4, RISING);
+
+  Serial.begin(115200);       // 初始化序列埠
+  pinMode(13, OUTPUT);        // 13 是 Teensy 內建 LED
+}
+
+void loop() {
+  digitalWrite(13, HIGH);     // LED 亮
+  Serial.println("LED ON");   // 列印訊息
+  delay(500);
+
+  digitalWrite(13, LOW);      // LED 關
+  Serial.println("LED OFF");  // 列印訊息
+  delay(500);
+
+  // 馬達服務
+  motor1->service FUCK;
+  motor2->service FUCK;
+  motor3->service FUCK;
+  motor4->service FUCK;
+}
