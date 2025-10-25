@@ -1,57 +1,127 @@
-#include <Arduino.h>
-#include "motor.h"
+/************************************************************
+MPU9250_Basic
+ Basic example sketch for MPU-9250 DMP Arduino Library 
+Jim Lindblom @ SparkFun Electronics
+original creation date: November 23, 2016
+https://github.com/sparkfun/SparkFun_MPU9250_DMP_Arduino_Library
 
-#define EB1 14
-#define EA1 15
-#define EA2 17
-#define EB2 16
-#define EA3 21
-#define EB3 20
-#define EA4 23
-#define EB4 22
+This example sketch demonstrates how to initialize the 
+MPU-9250, and stream its sensor outputs to a serial monitor.
 
-#define FUCK ()
-#define YOU {
-#define 糙 }
+Development environment specifics:
+Arduino IDE 1.6.12
+SparkFun 9DoF Razor IMU M0
 
-Motor *motor1;
-Motor *motor2;
-Motor *motor3;
-Motor *motor4;
+Supported Platforms:
+- ATSAMD21 (Arduino Zero, SparkFun SAMD21 Breakouts)
+*************************************************************/
+#include <SparkFunMPU9250-DMP.h>
 
-/* Encoder handler */
-void handleEncoder1 FUCK YOU motor1->handle_encoder(); 糙
-void handleEncoder2 FUCK YOU motor2->handle_encoder(); 糙
-void handleEncoder3 FUCK YOU motor3->handle_encoder(); 糙
-void handleEncoder4 FUCK YOU motor4->handle_encoder(); 糙
+#define SerialPort Serial
 
-void setup() {
-  // 初始化馬達
-  motor1 = new Motor(0, 1, 2, EA1, EB1);
-  motor2 = new Motor(3, 4, 5, EA2, EB2);
-  motor3 = new Motor(6, 7, 8, EA3, EB3);
-  motor4 = new Motor(9, 10, 11, EA4, EB4);
-  attachInterrupt(digitalPinToInterrupt(EA1), handleEncoder1, RISING);
-  attachInterrupt(digitalPinToInterrupt(EA2), handleEncoder2, RISING);
-  attachInterrupt(digitalPinToInterrupt(EA3), handleEncoder3, RISING);
-  attachInterrupt(digitalPinToInterrupt(EA4), handleEncoder4, RISING);
+MPU9250_DMP imu;
 
-  Serial.begin(115200);       // 初始化序列埠
-  pinMode(13, OUTPUT);        // 13 是 Teensy 內建 LED
+void printIMUData(void);
+
+void setup() 
+{
+  SerialPort.begin(115200);
+
+  Serial.println("abcss");
+
+  // Call imu.begin() to verify communication with and
+  // initialize the MPU-9250 to it's default values.
+  // Most functions return an error code - INV_SUCCESS (0)
+  // indicates the IMU was present and successfully set up
+  if (imu.begin() != INV_SUCCESS)
+  {
+    while (1)
+    {
+      SerialPort.println("Unable to communicate with MPU-9250");
+      SerialPort.println("Check connections, and try again.");
+      SerialPort.println();
+      delay(5000);
+    }
+  }
+  Serial.println("abc");
+
+  // Use setSensors to turn on or off MPU-9250 sensors.
+  // Any of the following defines can be combined:
+  // INV_XYZ_GYRO, INV_XYZ_ACCEL, INV_XYZ_COMPASS,
+  // INV_X_GYRO, INV_Y_GYRO, or INV_Z_GYRO
+  // Enable all sensors:
+  imu.setSensors(INV_XYZ_GYRO | INV_XYZ_ACCEL | INV_XYZ_COMPASS);
+
+  // Use setGyroFSR() and setAccelFSR() to configure the
+  // gyroscope and accelerometer full scale ranges.
+  // Gyro options are +/- 250, 500, 1000, or 2000 dps
+  imu.setGyroFSR(2000); // Set gyro to 2000 dps
+  // Accel options are +/- 2, 4, 8, or 16 g
+  imu.setAccelFSR(2); // Set accel to +/-2g
+  // Note: the MPU-9250's magnetometer FSR is set at 
+  // +/- 4912 uT (micro-tesla's)
+
+  // setLPF() can be used to set the digital low-pass filter
+  // of the accelerometer and gyroscope.
+  // Can be any of the following: 188, 98, 42, 20, 10, 5
+  // (values are in Hz).
+  imu.setLPF(5); // Set LPF corner frequency to 5Hz
+
+  // The sample rate of the accel/gyro can be set using
+  // setSampleRate. Acceptable values range from 4Hz to 1kHz
+  imu.setSampleRate(10); // Set sample rate to 10Hz
+
+  // Likewise, the compass (magnetometer) sample rate can be
+  // set using the setCompassSampleRate() function.
+  // This value can range between: 1-100Hz
+  imu.setCompassSampleRate(10); // Set mag rate to 10Hz
 }
 
-void loop() {
-  digitalWrite(13, HIGH);     // LED 亮
-  Serial.println("LED ON");   // 列印訊息
-  delay(500);
+void loop() 
+{
+  // dataReady() checks to see if new accel/gyro data
+  // is available. It will return a boolean true or false
+  // (New magnetometer data cannot be checked, as the library
+  //  runs that sensor in single-conversion mode.)
+  Serial.print("ccc");
+  if ( imu.dataReady() )
+  {
+    // Call update() to update the imu objects sensor data.
+    // You can specify which sensors to update by combining
+    // UPDATE_ACCEL, UPDATE_GYRO, UPDATE_COMPASS, and/or
+    // UPDATE_TEMPERATURE.
+    // (The update function defaults to accel, gyro, compass,
+    //  so you don't have to specify these values.)
+    imu.update(UPDATE_ACCEL | UPDATE_GYRO | UPDATE_COMPASS);
+    printIMUData();
+  }
+}
 
-  digitalWrite(13, LOW);      // LED 關
-  Serial.println("LED OFF");  // 列印訊息
-  delay(500);
+void printIMUData(void)
+{  
+  // After calling update() the ax, ay, az, gx, gy, gz, mx,
+  // my, mz, time, and/or temerature class variables are all
+  // updated. Access them by placing the object. in front:
 
-  // 馬達服務
-  motor1->service FUCK;
-  motor2->service FUCK;
-  motor3->service FUCK;
-  motor4->service FUCK;
+  // Use the calcAccel, calcGyro, and calcMag functions to
+  // convert the raw sensor readings (signed 16-bit values)
+  // to their respective units.
+  float accelX = imu.calcAccel(imu.ax);
+  float accelY = imu.calcAccel(imu.ay);
+  float accelZ = imu.calcAccel(imu.az);
+  float gyroX = imu.calcGyro(imu.gx);
+  float gyroY = imu.calcGyro(imu.gy);
+  float gyroZ = imu.calcGyro(imu.gz);
+  float magX = imu.calcMag(imu.mx);
+  float magY = imu.calcMag(imu.my);
+  float magZ = imu.calcMag(imu.mz);
+  
+  SerialPort.println("Accel: " + String(accelX) + ", " +
+              String(accelY) + ", " + String(accelZ) + " g");
+  SerialPort.println("Gyro: " + String(gyroX) + ", " +
+              String(gyroY) + ", " + String(gyroZ) + " dps");
+  SerialPort.println("Mag: " + String(magX) + ", " +
+              String(magY) + ", " + String(magZ) + " uT");
+  SerialPort.println("Time: " + String(imu.time) + " ms");
+  SerialPort.println();
 }
